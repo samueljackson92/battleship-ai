@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<head>
+    <script type="text/javascript" src="js/d3.min.js"></script>
+    <script type="text/javascript" src="js/ai.js"></script>
+    <script type="text/javascript" src="js/heatmap.js"></script>
+</head>
+<body>
+    <div id="heatmap">
+    </div>
+    <script type="text/javascript">
+        var GRID_SIZE = 10;
+        var board = new Matrix(false, GRID_SIZE);
+        board.setValue(3,3, true);
+        board.setValue(4,4, true);
+        board.setValue(5,5, true);
+        board.setValue(6,6, true);
+        board.setValue(6,0, true);
+        board.print();
+
+        var shipSizes = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+        var jdist = new JointDistribution(shipSizes, GRID_SIZE);
+        jdist.computeDistribution(board);
+        var index = jdist.findMax();
+
+        var i = index % GRID_SIZE;
+        var j = Math.floor(index / GRID_SIZE);
+        console.log(i + ", " + j)
+        var data = jdist.exportData();
+        console.log(jdist.getValue(2, 6));
+        heatmap("#heatmap", data);
+
+    </script>
+</body>
