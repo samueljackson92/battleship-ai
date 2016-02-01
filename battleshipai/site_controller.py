@@ -36,15 +36,14 @@ class BattleshipSiteController(object):
         return ('battlefield__wait' in classnames)
 
     def get_battlefield_state(self):
-        table = self.get_battlefield_table()
+        table = self.get_rival_battlefield()
         table_html = BeautifulSoup(table.get_attribute('innerHTML'))
 
         def check_state(cell):
             return "battlefield-cell__empty" in cell['class']
 
         cells = [check_state(cell) for row in table_html.find_all("tr")
-                      for cells in row.find_all("td")
-                      for cell in cells]
+                      for cell in row.find_all("td")]
 
         grid_state = np.array(cells).reshape(self._grid_size, self._grid_size)
         return grid_state
