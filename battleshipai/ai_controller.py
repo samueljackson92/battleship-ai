@@ -69,22 +69,27 @@ class BattleshipAI(object):
             if not self.controller.is_in_wait_mode():
                 # calculate the best move from the current state
                 state = self.controller.get_battlefield_state()
+                joint = self.compute_joint_pmf(state)
+                point = self.find_next_target(joint)
+                self.controller.click_cell(*point)
 
-                for g in self._grids:
-                    g.compute_pmf(state)
+    def compute_joint_pmf(self, state):
+        for g in self._grids:
+            g.compute_pmf(state)
 
-                aggregate = reduce(lambda x, y: x+y.grid, self._grids, np.zeros((10,10)).astype(float))
-                total = aggregate.sum()
-                if total > 0:
-                    aggregate /= total
+        joint = np.zeros((10, 10)).astype(float)
+        joint = reduce(lambda x, y: x+y.grid, self._grids, joint)
+        total = joint.sum()
+        if total > 0:
+            joint /= total
+        return joint
 
-                idx = np.argmax(aggregate)
-                x = idx % 10
-                y = idx / 10
-
-                self._logger.info("Best probability is %f" % np.max(aggregate))
-                # play move
-                self.controller.click_cell(x, y)
+    def find_next_target(self, joint):
+        self._logger.info("Best probability is %f" % np.max(joint))
+        idx = np.argmax(joint)
+        x = idx % 10
+        y = idx / 10
+        return x, y
 
     @property
     def controller(self):
