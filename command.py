@@ -7,4 +7,5 @@ if __name__ == "__main__":
         controller.start_game(mode='friend')
 
         while True:
-            print controller.get_battlefield_state()
+            if not controller.is_in_wait_mode():
+                controller.click_cell(1, 1)

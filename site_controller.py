@@ -11,9 +11,10 @@ class BattleshipSiteController(object):
 
     def __init__(self):
         self._site_address = "http://en.battleship-game.org"
+        self._grid_size = 10
 
     def __enter__(self):
-        self._driver = webdriver.Chrome()
+        self._driver = webdriver.Firefox()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -35,8 +36,7 @@ class BattleshipSiteController(object):
         return ('battlefield__wait' in classnames)
 
     def get_battlefield_state(self):
-        text = 'battlefield-table'
-        table = self._driver.find_element_by_xpath("//table[@class='%s']" % text)
+        table = self.get_battlefield_table()
         table_html = BeautifulSoup(table.get_attribute('innerHTML'))
 
         def check_state(cell):
@@ -46,9 +46,19 @@ class BattleshipSiteController(object):
                       for cells in row.find_all("td")
                       for cell in cells]
 
-        grid_state = map(check_state, cells)
-        grid_state = np.array(grid_state).reshape(10, 10)
+        grid_state = np.array(cells).reshape(self._grid_size, self._grid_size)
         return grid_state
+
+    def click_cell(self, i, j):
+        # This is a terrible hack to click on a specifc cell in the rival's
+        # table. For some reason beyond my understanding selenium doesn't do
+        # anything when invoking .click() here.
+        # This also had issues in selenium 2.49 forcing me to revert to 2.48
+        # See: http://stackoverflow.com/questions/34969006/
+        code = ("document.getElementsByClassName('battlefield__rival')[0]"
+                ".childNodes[1].childNodes[1].childNodes[0]"
+                ".rows[%d].cells[%d].children[0].click()" % (j, i))
+        self._driver.execute_script(code)
 
     def get_rival_battlefield(self):
         classname = 'battlefield__rival'
@@ -61,6 +71,10 @@ class BattleshipSiteController(object):
     def click_div_by_class_name(self, text):
         div = self.get_div_by_class_name(text)
         div.click()
+
+    def get_battlefield_table(self):
+        text = 'battlefield-table'
+        return self._driver.find_element_by_xpath("//table[@class='%s']" % text)
 
     def get_div_by_class_name(self, text):
         return self._driver.find_element_by_xpath("//div[@class='%s']" % text)
