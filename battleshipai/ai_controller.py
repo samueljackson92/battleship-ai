@@ -1,5 +1,8 @@
 
+import logging
 import numpy as np
+
+logging.basicConfig(level=logging.INFO)
 
 
 class Grid(object):
@@ -7,7 +10,7 @@ class Grid(object):
     def __init__(self, shape_size):
         self.grid_width = 10
         self.shape_size = shape_size
-        self.grid = np.zeros((self.grid_width, self.grid_width))
+        self.grid = np.zeros((self.grid_width, self.grid_width)).astype(float)
 
     def compute_pmf(self, state):
         self.compute_horizontal(state)
@@ -53,7 +56,10 @@ class Grid(object):
 class BattleshipAI(object):
 
     def __init__(self, controller):
+        self._logger = logging.getLogger(__name__)
         self._controller = controller
+        self._ship_sizes = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+        self._grids = [Grid(x) for x in self._ship_sizes]
 
     def play(self):
         self.controller.connect()
@@ -63,10 +69,22 @@ class BattleshipAI(object):
             if not self.controller.is_in_wait_mode():
                 # calculate the best move from the current state
                 state = self.controller.get_battlefield_state()
-                self.compute_horizontal(state)
 
-                print state
+                for g in self._grids:
+                    g.compute_pmf(state)
+
+                aggregate = reduce(lambda x, y: x+y.grid, self._grids, np.zeros((10,10)).astype(float))
+                total = aggregate.sum()
+                if total > 0:
+                    aggregate /= total
+
+                idx = np.argmax(aggregate)
+                x = idx % 10
+                y = idx / 10
+
+                self._logger.info("Best probability is %f" % np.max(aggregate))
                 # play move
+                self.controller.click_cell(x, y)
 
     @property
     def controller(self):

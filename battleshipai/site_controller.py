@@ -37,10 +37,11 @@ class BattleshipSiteController(object):
 
     def get_battlefield_state(self):
         table = self.get_rival_battlefield()
-        table_html = BeautifulSoup(table.get_attribute('innerHTML'))
+        text = table.get_attribute('innerHTML')
+        table_html = BeautifulSoup(text, 'html.parser')
 
         def check_state(cell):
-            return "battlefield-cell__empty" in cell['class']
+            return "battlefield-cell__empty" not in cell['class']
 
         cells = [check_state(cell) for row in table_html.find_all("tr")
                       for cell in row.find_all("td")]
@@ -49,6 +50,8 @@ class BattleshipSiteController(object):
         return grid_state
 
     def click_cell(self, i, j):
+        logger.info("Clicking cell (%d, %d)" % (i, j))
+
         # This is a terrible hack to click on a specifc cell in the rival's
         # table. For some reason beyond my understanding selenium doesn't do
         # anything when invoking .click() here.
