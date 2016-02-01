@@ -1,7 +1,16 @@
 
+import click
 from site_controller import BattleshipSiteController
 
-if __name__ == "__main__":
+
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+def start():
+    click.echo('Starting game...')
     with BattleshipSiteController() as controller:
         controller.connect()
         controller.start_game(mode='friend')
